@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 400" role="img" aria-label="相机标定与工作区映射">
+  <defs>
+    <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
+      <path d="M 20 0 L 0 0 0 20" fill="none" stroke="#cbd5e1" stroke-width="1"/>
+    </pattern>
+    <pattern id="checker" width="24" height="24" patternUnits="userSpaceOnUse">
+      <rect width="24" height="24" fill="#fff"/>
+      <rect width="12" height="12" fill="#1e293b"/>
+      <rect x="12" y="12" width="12" height="12" fill="#1e293b"/>
+    </pattern>
+    <marker id="m1" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto">
+      <path d="M0 0 L10 5 L0 10 Z" fill="#0ea5e9"/>
+    </marker>
+  </defs>
+  <rect width="720" height="400" rx="12" fill="#f1f5f9"/>
+  <text x="360" y="36" text-anchor="middle" fill="#0f172a" font-family="system-ui,sans-serif" font-size="17" font-weight="700">视觉标定：图像坐标 → 机械臂工作区</text>
+  <g transform="translate(32 64)">
+    <rect width="300" height="240" rx="8" fill="#0f172a" stroke="#334155" stroke-width="2"/>
+    <text x="16" y="28" fill="#94a3b8" font-family="system-ui,sans-serif" font-size="12">相机画面</text>
+    <rect x="16" y="40" width="268" height="180" fill="url(#checker)" opacity="0.95"/>
+    <text x="150" y="130" text-anchor="middle" fill="#fff" font-family="system-ui,sans-serif" font-size="11" opacity="0.9">标定板 / 特征点</text>
+    <text x="16" y="232" fill="#64748b" font-family="system-ui,sans-serif" font-size="10">检测角点 · 求内外参</text>
+  </g>
+  <path d="M352 200 L388 200" stroke="#64748b" stroke-width="3" marker-end="url(#m1)"/>
+  <text x="370" y="188" text-anchor="middle" fill="#0369a1" font-family="system-ui,sans-serif" font-size="11" font-weight="600">标定矩阵</text>
+  <g transform="translate(400 64)">
+    <rect width="288" height="240" rx="8" fill="#fff" stroke="#22c55e" stroke-width="2" stroke-dasharray="6 4"/>
+    <rect x="16" y="40" width="256" height="180" fill="url(#grid)"/>
+    <text x="144" y="28" text-anchor="middle" fill="#15803d" font-family="system-ui,sans-serif" font-size="12" font-weight="600">工作区平面 (mm)</text>
+    <circle cx="120" cy="140" r="10" fill="#ef4444" stroke="#991b1b"/>
+    <circle cx="200" cy="120" r="10" fill="#3b82f6" stroke="#1d4ed8"/>
+    <text x="144" y="228" text-anchor="middle" fill="#64748b" font-family="system-ui,sans-serif" font-size="10">像素点映射到桌面坐标</text>
+  </g>
+  <text x="360" y="360" text-anchor="middle" fill="#475569" font-family="system-ui,sans-serif" font-size="12">标定过期或挪动相机后需重新标定</text>
+</svg>

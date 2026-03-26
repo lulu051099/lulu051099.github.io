@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 380" role="img" aria-label="课前环境与安全检查">
+  <defs>
+    <filter id="f1" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="2" stdDeviation="2" flood-opacity="0.15"/>
+    </filter>
+    <pattern id="hatch" width="8" height="8" patternUnits="userSpaceOnUse">
+      <path d="M0 8 L8 0" stroke="#fecaca" stroke-width="1"/>
+    </pattern>
+  </defs>
+  <rect width="720" height="380" rx="12" fill="#f1f5f9"/>
+  <text x="360" y="36" text-anchor="middle" fill="#0f172a" font-family="system-ui,sans-serif" font-size="17" font-weight="700">课前检查清单 · 安全工位</text>
+  <g transform="translate(32 60)" filter="url(#f1)">
+    <rect width="300" height="292" rx="10" fill="#fff" stroke="#cbd5e1" stroke-width="2"/>
+    <text x="16" y="28" fill="#334155" font-family="system-ui,sans-serif" font-size="13" font-weight="700">逐项确认</text>
+    <rect x="16" y="44" width="18" height="18" rx="3" fill="#22c55e"/>
+    <path d="M20 53 L25 58 L33 47" stroke="#fff" stroke-width="2" fill="none"/>
+    <text x="42" y="58" fill="#334155" font-family="system-ui,sans-serif" font-size="12">机械臂已上电、无报警</text>
+    <rect x="16" y="76" width="18" height="18" rx="3" fill="#22c55e"/>
+    <path d="M20 85 L25 90 L33 79" stroke="#fff" stroke-width="2" fill="none"/>
+    <text x="42" y="90" fill="#334155" font-family="system-ui,sans-serif" font-size="12">相机连接正常、画面清晰</text>
+    <rect x="16" y="108" width="18" height="18" rx="3" fill="#22c55e"/>
+    <path d="M20 117 L25 122 L33 111" stroke="#fff" stroke-width="2" fill="none"/>
+    <text x="42" y="122" fill="#334155" font-family="system-ui,sans-serif" font-size="12">浏览器能打开控制台页面</text>
+    <rect x="16" y="140" width="18" height="18" rx="3" fill="#e2e8f0" stroke="#94a3b8"/>
+    <text x="42" y="154" fill="#334155" font-family="system-ui,sans-serif" font-size="12">标定在有效期内（按需）</text>
+    <g transform="translate(16 180)">
+      <rect x="0" y="0" width="56" height="56" rx="8" fill="#dbeafe"/>
+      <path d="M28 14 L28 38 M18 24 L38 24" stroke="#2563eb" stroke-width="2.5" stroke-linecap="round"/>
+      <text x="28" y="52" text-anchor="middle" fill="#1e40af" font-size="9">电源</text>
+      <rect x="72" y="0" width="56" height="56" rx="8" fill="#dcfce7"/>
+      <circle cx="100" cy="26" r="12" fill="none" stroke="#16a34a" stroke-width="2"/>
+      <path d="M94 26 L98 30 L106 20" stroke="#16a34a" stroke-width="2" fill="none"/>
+      <text x="100" y="52" text-anchor="middle" fill="#166534" font-size="9">网络</text>
+      <rect x="144" y="0" width="56" height="56" rx="8" fill="#fef3c7"/>
+      <path d="M172 16 L184 28 L160 28 Z" fill="#d97706"/>
+      <text x="172" y="52" text-anchor="middle" fill="#92400e" font-size="9">急停</text>
+    </g>
+  </g>
+  <g transform="translate(360 60)" filter="url(#f1)">
+    <rect width="328" height="292" rx="10" fill="#fff" stroke="#cbd5e1" stroke-width="2"/>
+    <text x="16" y="28" fill="#334155" font-family="system-ui,sans-serif" font-size="13" font-weight="700">工位与安全区</text>
+    <rect x="24" y="48" width="280" height="200" rx="6" fill="#fafafa" stroke="#e2e8f0"/>
+    <rect x="80" y="100" width="168" height="120" rx="4" fill="none" stroke="#22c55e" stroke-width="3" stroke-dasharray="8 4"/>
+    <text x="164" y="92" text-anchor="middle" fill="#15803d" font-family="system-ui,sans-serif" font-size="11">安全作业区</text>
+    <rect x="40" y="180" width="248" height="56" fill="url(#hatch)" opacity="0.6"/>
+    <text x="164" y="212" text-anchor="middle" fill="#b91c1c" font-family="system-ui,sans-serif" font-size="10">边界外 · 禁止伸入</text>
+    <ellipse cx="164" cy="140" rx="28" ry="10" fill="#64748b" opacity="0.35"/>
+    <path d="M140 130 L150 100 L170 95 L185 110 L175 135 Z" fill="#94a3b8" stroke="#475569" stroke-width="1.5"/>
+  </g>
+</svg>
