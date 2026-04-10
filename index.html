@@ -1,0 +1,776 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>个人作品集 | AI 产品经理</title>
+    <!-- 优先加载 Tailwind -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --accent-color: #3B82F6; 
+            --bg-light: #ffffff;
+            --text-dark: #111111;
+        }
+
+        /* 基础样式兜底，防止 CDN 挂掉时全白 */
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #ffffff;
+            color: #111111;
+            font-family: 'Inter', -apple-system, sans-serif;
+            overflow-x: hidden;
+        }
+
+        .reveal {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: opacity 0.8s ease-out, transform 0.8s ease-out;
+        }
+
+        .reveal.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* 针对不支持脚本的环境或加载失败的兼容 */
+        .no-js .reveal {
+            opacity: 1;
+            transform: none;
+        }
+
+        .hero-title {
+            font-size: clamp(2.5rem, 8vw, 7rem);
+            line-height: 1;
+            font-weight: 800;
+            letter-spacing: -0.04em;
+        }
+
+        .img-placeholder {
+            background-color: #f3f4f6;
+            aspect-ratio: 16 / 10;
+            overflow: hidden;
+            border-radius: 8px;
+        }
+
+        .img-placeholder img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        /* 导航平滑 */
+        html { scroll-behavior: smooth; }
+        /* 电子宠物样式 */
+        #desk-pet {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 150px; /* 调整宠物大小 */
+            height: auto;
+            z-index: 9999;
+            cursor: grab;
+            user-select: none;
+            /* 拖拽位置通过 js 设置的 translate3d 实现 */
+        }
+        
+        #desk-pet:active {
+            cursor: grabbing;
+        }
+
+        #desk-pet img {
+            width: 100%;
+            height: auto;
+            pointer-events: none; /* 防止图片本身的拖拽干扰 */
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            transform-origin: bottom center;
+        }
+
+        /* 仅在鼠标悬停时播放跳动动画 */
+        #desk-pet:not(.dragging):hover img {
+            animation: pet-bounce 1.2s infinite ease-in-out;
+        }
+
+        /* 吃饭时的放大效果 */
+        #desk-pet.eating img {
+            animation: none !important;
+            transform: scale(1.15);
+        }
+
+        @keyframes pet-bounce {
+            0%, 100% { transform: scaleY(1) translateY(0); }
+            50% { transform: scaleY(0.95) translateY(-10px); }
+        }
+        
+        /* 气泡对话框 */
+        #pet-bubble {
+            position: absolute;
+            top: -40px;
+            right: 0;
+            background: white;
+            border: 2px solid #3B82F6;
+            border-radius: 12px;
+            padding: 8px 12px;
+            font-size: 12px;
+            font-weight: bold;
+            color: #3B82F6;
+            white-space: nowrap;
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            z-index: 10;
+        }
+
+        #pet-bubble::after {
+            content: '';
+            position: absolute;
+            bottom: -6px;
+            right: 40px;
+            width: 10px;
+            height: 10px;
+            background: white;
+            border-bottom: 2px solid #3B82F6;
+            border-right: 2px solid #3B82F6;
+            transform: rotate(45deg);
+        }
+
+        /* 悬停或吃饭时显示气泡 */
+        #desk-pet:not(.dragging):hover #pet-bubble,
+        #desk-pet.eating #pet-bubble {
+            opacity: 1;
+        }
+
+        /* 投喂菜单 */
+        #food-menu {
+            position: absolute;
+            top: 20px;
+            left: -40px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            opacity: 0;
+            transform: translateX(10px) scale(0.9);
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            pointer-events: none;
+        }
+
+        #desk-pet:not(.dragging):hover #food-menu {
+            opacity: 1;
+            transform: translateX(0) scale(1);
+            pointer-events: auto;
+        }
+
+        .food-btn {
+            background: white;
+            border: 2px solid #e5e7eb;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            cursor: pointer;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            transition: all 0.2s;
+            padding: 0;
+        }
+
+        .food-btn:hover {
+            transform: scale(1.15) rotate(5deg);
+            border-color: #3B82F6;
+            box-shadow: 0 6px 8px -1px rgba(59, 130, 246, 0.2);
+        }
+        /* Modal 控制逻辑复用样式 */
+        .modal-overlay {
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease-in-out;
+        }
+        .modal-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        .modal-overlay .modal-content {
+            transform: scale(0.95) translateY(20px);
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .modal-overlay.active .modal-content {
+            transform: scale(1) translateY(0);
+        }
+    </style>
+</head>
+<body class="bg-white text-gray-900">
+
+    <!-- 导航栏 -->
+    <nav class="fixed top-0 w-full z-50 bg-white/80 backdrop-blur-md border-b border-gray-100 h-16 flex items-center">
+        <div class="max-w-7xl mx-auto px-6 w-full flex justify-between items-center">
+            <a href="#" class="font-black text-xl tracking-tighter">itslulu<span class="text-blue-600">.</span>xyz</a>
+            <div class="hidden md:flex space-x-8 text-xs font-bold uppercase tracking-widest text-gray-400">
+                <a href="#home" class="hover:text-black transition-colors">首页</a>
+                <a href="#work" class="hover:text-black transition-colors">作品集</a>
+                <a href="#contact" class="hover:text-black transition-colors">联系</a>
+            </div>
+            <div class="md:hidden text-sm font-bold">MENU</div>
+        </div>
+    </nav>
+
+    <!-- 主视觉区 (个人简介) -->
+    <section id="home" class="relative min-h-screen flex items-center px-6 pt-24 pb-16 overflow-hidden">
+        <!-- 装饰性背景 -->
+        <div class="absolute top-0 right-0 -z-10 w-2/3 h-full bg-gradient-to-bl from-blue-50 to-transparent rounded-bl-full opacity-60"></div>
+        
+        <div class="max-w-7xl mx-auto w-full flex flex-col-reverse md:flex-row items-center gap-16 md:gap-24 relative z-10">
+            <!-- 文字区 (左侧) -->
+            <div class="w-full md:w-1/2 space-y-8 reveal">
+                <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-50 border border-blue-100 text-blue-600 text-sm font-bold tracking-widest uppercase">
+                    <span class="relative flex h-2 w-2">
+                      <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+                      <span class="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
+                    </span>
+                    2027届准毕业生 · Class of 2027
+                </div>
+                <h1 class="text-6xl md:text-7xl lg:text-8xl font-black tracking-tighter text-black leading-tight">
+                    你好，<br>
+                    <span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-400">我是谢晓璐。</span>
+                </h1>
+                <div class="space-y-4 text-gray-500 text-lg leading-relaxed max-w-lg">
+                    <p>
+                        目前就读于<span class="text-black font-bold">华南师范大学 (211) · 信息管理与信息系统</span>。我热衷于探索 <span class="text-blue-600 font-bold">AI 辅助设计与创新问题解决</span>，具备从 0 到 1 的产品设计、AI 场景落地以及大模型 (LLM / RAG / Agent) 应用的实战经验。
+                    </p>
+                    <p>
+                        擅长将复杂的技术能力转化为直观的产品价值。无论是低代码智能体平台的搭建、机器人的零代码交互，还是自媒体运营的增长黑客实践，我始终坚持数据驱动与用户同理心。
+                    </p>
+                </div>
+                <div class="flex flex-wrap gap-4 pt-4 items-center">
+                    <a href="#work" class="bg-black text-white px-8 py-4 rounded-full text-sm font-bold hover:bg-blue-600 hover:shadow-lg hover:shadow-blue-500/30 transition-all duration-300">
+                        浏览作品
+                    </a>
+                    <a href="#contact" class="px-8 py-4 rounded-full text-sm font-bold border border-gray-200 hover:border-black transition-all duration-300">
+                        和我聊聊吧
+                    </a>
+                </div>
+            </div>
+
+            <!-- 照片区 (右侧) -->
+            <div class="w-full md:w-1/2 reveal flex justify-center md:justify-end" style="transition-delay: 0.2s;">
+                <div class="relative w-full max-w-lg lg:max-w-xl xl:max-w-2xl group">
+                    <!-- 照片背后的装饰框 -->
+                    <div class="absolute inset-0 bg-blue-600 rounded-[2rem] transform rotate-3 scale-105 opacity-10 transition-transform duration-500 group-hover:rotate-6 group-hover:scale-110"></div>
+                    <!-- 你的照片 (保持原比例) -->
+                    <img src="个人照片.jpeg" alt="谢晓璐" class="relative z-10 w-full h-auto object-contain rounded-[2rem] shadow-2xl border-[6px] border-white transform transition-transform duration-700 group-hover:-translate-y-2">
+                    
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 作品区 -->
+    <section id="work" class="py-24 px-6 bg-gray-50">
+        <div class="max-w-7xl mx-auto">
+            <h2 class="text-sm font-bold uppercase tracking-[0.3em] text-gray-400 mb-16 reveal">我的作品集 | My Portfolio</h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+                <!-- 类别 1: Vibe coding -->
+                <div class="project-card reveal group cursor-pointer" onclick="openVibeModal()">
+                    <div class="img-placeholder mb-6 overflow-hidden rounded-xl">
+                        <!-- 这里使用了占位图，如果你有那个项目的截图，可以把链接换成你的截图 -->
+                        <img src="https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&q=80&w=800" alt="Vibe coding 项目" class="group-hover:scale-110 transition-transform duration-500">
+                    </div>
+                    <div class="space-y-3">
+                        <h3 class="text-2xl font-bold group-hover:text-blue-600 transition-colors">Vibe coding 实战项目</h3>
+                        <p class="text-gray-500 text-sm">通过自然语言与 AI 协作编程，快速构建完整的前端页面与交互逻辑，探索 AI 时代的开发新范式。</p>
+                        <div class="flex gap-2">
+                            <span class="text-[10px] uppercase font-bold px-2 py-1 border border-gray-200 rounded">AI Coding</span>
+                            <span class="text-[10px] uppercase font-bold px-2 py-1 border border-gray-200 rounded">Frontend</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 类别 2: AIGC创作与图像生成 -->
+                <div class="project-card reveal group cursor-pointer" style="transition-delay: 0.1s;" onclick="openAigcModal()">
+                    <div class="img-placeholder mb-6 overflow-hidden rounded-xl">
+                        <img src="https://images.unsplash.com/photo-1620641788421-7a1c342ea42e?auto=format&fit=crop&q=80&w=800" alt="AIGC创作与图像生成" class="group-hover:scale-110 transition-transform duration-500">
+                    </div>
+                    <div class="space-y-3">
+                        <h3 class="text-2xl font-bold group-hover:text-blue-600 transition-colors">AIGC创作与图像生成</h3>
+                        <p class="text-gray-500 text-sm">借助人工智能的力量打破创作边界，将想象力转化为令人惊叹的视觉艺术。</p>
+                        <div class="flex gap-2">
+                            <span class="text-[10px] uppercase font-bold px-2 py-1 border border-gray-200 rounded">AI</span>
+                            <span class="text-[10px] uppercase font-bold px-2 py-1 border border-gray-200 rounded">Design</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 类别 3: 数据分析与数模实践 -->
+                <div class="project-card reveal group cursor-pointer" style="transition-delay: 0.2s;" onclick="openDataModal()">
+                    <div class="img-placeholder mb-6 overflow-hidden rounded-xl">
+                        <img src="https://images.unsplash.com/photo-1504868584819-f8e8b4b6d7e3?auto=format&fit=crop&q=80&w=800" alt="数据分析与数模实践" class="group-hover:scale-110 transition-transform duration-500">
+                    </div>
+                    <div class="space-y-3">
+                        <h3 class="text-2xl font-bold group-hover:text-blue-600 transition-colors">数据分析与数模实践</h3>
+                        <p class="text-gray-500 text-sm">从海量数据中挖掘有价值的洞察，运用数学模型解决复杂的现实业务问题。</p>
+                        <div class="flex gap-2">
+                            <span class="text-[10px] uppercase font-bold px-2 py-1 border border-gray-200 rounded">Data</span>
+                            <span class="text-[10px] uppercase font-bold px-2 py-1 border border-gray-200 rounded">Modeling</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 类别 4: Agent&workflow -->
+                <div class="project-card reveal group cursor-pointer" style="transition-delay: 0.3s;" onclick="openAgentModal()">
+                    <div class="img-placeholder mb-6 overflow-hidden rounded-xl">
+                        <img src="https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&q=80&w=800" alt="Agent&workflow" class="group-hover:scale-110 transition-transform duration-500">
+                    </div>
+                    <div class="space-y-3">
+                        <h3 class="text-2xl font-bold group-hover:text-blue-600 transition-colors">Agent & Workflow</h3>
+                        <p class="text-gray-500 text-sm">设计并构建智能代理与自动化工作流，提升生产力并重塑未来的工作方式。</p>
+                        <div class="flex gap-2">
+                            <span class="text-[10px] uppercase font-bold px-2 py-1 border border-gray-200 rounded">Automation</span>
+                            <span class="text-[10px] uppercase font-bold px-2 py-1 border border-gray-200 rounded">AI Agents</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 类别 5: 竞赛&项目 -->
+                <div class="project-card reveal group cursor-pointer" style="transition-delay: 0.4s;">
+                    <div class="img-placeholder mb-6 overflow-hidden rounded-xl">
+                        <img src="https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&q=80&w=800" alt="竞赛&项目" class="group-hover:scale-110 transition-transform duration-500">
+                    </div>
+                    <div class="space-y-3">
+                        <h3 class="text-2xl font-bold group-hover:text-blue-600 transition-colors">竞赛 & 项目</h3>
+                        <p class="text-gray-500 text-sm">记录在各类竞赛与实际项目中的实战经验、团队协作以及最终的成果展示。</p>
+                        <div class="flex gap-2">
+                            <span class="text-[10px] uppercase font-bold px-2 py-1 border border-gray-200 rounded">Competition</span>
+                            <span class="text-[10px] uppercase font-bold px-2 py-1 border border-gray-200 rounded">Practice</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 联系区 -->
+    <section id="contact" class="py-32 px-6">
+        <div class="max-w-7xl mx-auto text-center reveal">
+            <h2 class="text-5xl md:text-7xl font-bold tracking-tighter mb-12">期待与您的进一步沟通 🌟</h2>
+            <a href="mailto:lulu360510@outlook.com" class="text-3xl text-blue-600 font-bold underline decoration-2 underline-offset-8 hover:text-black transition-colors">lulu360510@outlook.com</a>
+        </div>
+    </section>
+
+    <footer class="py-12 border-t border-gray-100 text-center text-[10px] uppercase tracking-widest text-gray-400">
+        &copy; 2026 LuLu Portfolio / AI Product Manager
+    </footer>
+
+    <!-- 电子宠物 -->
+    <div id="desk-pet" style="transform: translate3d(0px, 0px, 0);">
+        <div id="pet-bubble">hihi你好呀!欢迎你来认识我的电子主人噢~</div>
+        <div id="food-menu">
+            <button class="food-btn" onclick="feedPet(event, '🍰', '呜哇，好甜的小蛋糕！😋')" title="喂蛋糕">🍰</button>
+            <button class="food-btn" onclick="feedPet(event, '🍟', '咔滋咔滋，薯条真香！🍟')" title="喂薯条">🍟</button>
+        </div>
+        <img src="assets/pet_transparent.png" alt="Desk Pet" draggable="false">
+    </div>
+
+                <!-- AIGC 悬浮菜单 (Modal) -->
+    <div id="aigc-modal" class="modal-overlay fixed inset-0 z-[10000] flex items-center justify-center">
+        <!-- 半透明黑色背景遮罩 -->
+        <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" onclick="closeAigcModal()"></div>
+        
+        <!-- 弹窗内容 -->
+        <div class="modal-content relative bg-white rounded-3xl shadow-2xl p-8 md:p-12 max-w-md w-[90%] z-10 border border-gray-100">
+            <!-- 关闭按钮 -->
+            <button onclick="closeAigcModal()" class="absolute top-6 right-6 text-gray-400 hover:text-black transition-colors">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+            
+            <div class="text-center space-y-6">
+                <div class="w-16 h-16 bg-purple-50 text-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path></svg>
+                </div>
+                <h3 class="text-3xl font-black tracking-tight">AIGC 创作</h3>
+                <p class="text-gray-500">探索我的 AI 图像生成与设计实践</p>
+                
+                <div class="flex flex-col gap-4 mt-8">
+                    <!-- 电子精灵设计图纸 -->
+                    <button onclick="window.open('file2img_20260329_192950_副本.png', '_blank'); closeAigcModal();" class="group relative w-full flex items-center justify-between p-4 rounded-2xl border-2 border-gray-100 hover:border-purple-500 hover:bg-purple-50/50 transition-all duration-300">
+                        <div class="flex items-center gap-4">
+                            <div class="w-12 h-12 rounded-xl overflow-hidden shadow-sm flex-shrink-0">
+                                <img src="file2img_20260329_192950_副本.png" class="w-full h-full object-cover">
+                            </div>
+                            <div class="text-left">
+                                <span class="font-bold text-gray-800 block">✨ 电子精灵设计</span>
+                                <span class="text-xs text-gray-500">风格探索与变体生成过程</span>
+                            </div>
+                        </div>
+                        <svg class="w-5 h-5 text-gray-400 group-hover:text-purple-500 group-hover:translate-x-1 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                    </button>
+
+                    <!-- 小灰鼠鼠 -->
+                    <button onclick="window.open('小灰鼠鼠.png', '_blank'); closeAigcModal();" class="group relative w-full flex items-center justify-between p-4 rounded-2xl border-2 border-gray-100 hover:border-purple-500 hover:bg-purple-50/50 transition-all duration-300">
+                        <div class="flex items-center gap-4">
+                            <div class="w-12 h-12 rounded-xl overflow-hidden shadow-sm flex-shrink-0 bg-white">
+                                <img src="小灰鼠鼠.png" class="w-full h-full object-contain">
+                            </div>
+                            <div class="text-left">
+                                <span class="font-bold text-gray-800 block">🐁 电子宠物原型</span>
+                                <span class="text-xs text-gray-500">主站悬浮小助手的原始设计</span>
+                            </div>
+                        </div>
+                        <svg class="w-5 h-5 text-gray-400 group-hover:text-purple-500 group-hover:translate-x-1 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                    </button>
+
+                    <!-- 电商图片生成 -->
+                    <button onclick="window.open('电商.jpeg', '_blank'); closeAigcModal();" class="group relative w-full flex items-center justify-between p-4 rounded-2xl border-2 border-gray-100 hover:border-purple-500 hover:bg-purple-50/50 transition-all duration-300">
+                        <div class="flex items-center gap-4">
+                            <div class="w-12 h-12 rounded-xl overflow-hidden shadow-sm flex-shrink-0">
+                                <img src="电商.jpeg" class="w-full h-full object-cover">
+                            </div>
+                            <div class="text-left">
+                                <span class="font-bold text-gray-800 block">🛍️ 电商场景生成</span>
+                                <span class="text-xs text-gray-500">AI赋能电商视觉与商品展示</span>
+                            </div>
+                        </div>
+                        <svg class="w-5 h-5 text-gray-400 group-hover:text-purple-500 group-hover:translate-x-1 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="vibe-modal" class="modal-overlay fixed inset-0 z-[10000] flex items-center justify-center">
+        <!-- 半透明黑色背景遮罩 -->
+        <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" onclick="closeVibeModal()"></div>
+        
+        <!-- 弹窗内容 -->
+        <div class="modal-content relative bg-white rounded-3xl shadow-2xl p-8 md:p-12 max-w-md w-[90%] z-10 border border-gray-100">
+            <!-- 关闭按钮 -->
+            <button onclick="closeVibeModal()" class="absolute top-6 right-6 text-gray-400 hover:text-black transition-colors">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+            
+            <div class="text-center space-y-6">
+                <div class="w-16 h-16 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path></svg>
+                </div>
+                <h3 class="text-3xl font-black tracking-tight">Vibe Coding</h3>
+                <p class="text-gray-500">请选择你要查看的项目内容</p>
+                
+                <div class="flex flex-col gap-4 mt-8">
+                    <button onclick="window.open('vibe-project.html', '_blank'); closeVibeModal();" class="group relative w-full flex items-center justify-between p-4 rounded-2xl border-2 border-gray-100 hover:border-blue-500 hover:bg-blue-50/50 transition-all duration-300">
+                        <div class="flex items-center gap-4">
+                            <div class="w-10 h-10 bg-white rounded-full shadow-sm flex items-center justify-center text-blue-600 group-hover:scale-110 transition-transform">
+                                🤖
+                            </div>
+                            <span class="font-bold text-gray-800">机械臂用户手册</span>
+                        </div>
+                        <svg class="w-5 h-5 text-gray-400 group-hover:text-blue-500 group-hover:translate-x-1 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 数据分析与数模实践 悬浮菜单 (Modal) -->
+    <div id="data-modal" class="modal-overlay fixed inset-0 z-[10000] flex items-center justify-center">
+        <!-- 半透明黑色背景遮罩 -->
+        <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" onclick="closeDataModal()"></div>
+        
+        <!-- 弹窗内容 -->
+        <div class="modal-content relative bg-white rounded-3xl shadow-2xl p-8 md:p-12 max-w-md w-[90%] z-10 border border-gray-100">
+            <!-- 关闭按钮 -->
+            <button onclick="closeDataModal()" class="absolute top-6 right-6 text-gray-400 hover:text-black transition-colors">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+            
+            <div class="text-center space-y-6">
+                <div class="w-16 h-16 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+                </div>
+                <h3 class="text-3xl font-black tracking-tight">数据分析与数模实践</h3>
+                <p class="text-gray-500">请选择你要查看的论文</p>
+                
+                <div class="flex flex-col gap-4 mt-8">
+                    <!-- 国赛数模 -->
+                    <button onclick="window.open('国赛数模.pdf', '_blank'); closeDataModal();" class="group relative w-full flex items-center justify-between p-4 rounded-2xl border-2 border-gray-100 hover:border-indigo-500 hover:bg-indigo-50/50 transition-all duration-300">
+                        <div class="flex items-center gap-4">
+                            <div class="w-10 h-10 bg-white rounded-full shadow-sm flex items-center justify-center text-indigo-600 group-hover:scale-110 transition-transform">
+                                🇨🇳
+                            </div>
+                            <span class="font-bold text-gray-800">国赛数模论文</span>
+                        </div>
+                        <svg class="w-5 h-5 text-gray-400 group-hover:text-indigo-500 group-hover:translate-x-1 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                    </button>
+                    
+                    <!-- 美赛数模 -->
+                    <button onclick="window.open('2611364.pdf', '_blank'); closeDataModal();" class="group relative w-full flex items-center justify-between p-4 rounded-2xl border-2 border-gray-100 hover:border-indigo-500 hover:bg-indigo-50/50 transition-all duration-300">
+                        <div class="flex items-center gap-4">
+                            <div class="w-10 h-10 bg-white rounded-full shadow-sm flex items-center justify-center text-indigo-600 group-hover:scale-110 transition-transform">
+                                🇺🇸
+                            </div>
+                            <span class="font-bold text-gray-800">美赛数模论文</span>
+                        </div>
+                        <svg class="w-5 h-5 text-gray-400 group-hover:text-indigo-500 group-hover:translate-x-1 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Agent 悬浮菜单 (Modal) -->
+    <div id="agent-modal" class="modal-overlay fixed inset-0 z-[10000] flex items-center justify-center">
+        <!-- 半透明黑色背景遮罩 -->
+        <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" onclick="closeAgentModal()"></div>
+        
+        <!-- 弹窗内容 -->
+        <div class="modal-content relative bg-white rounded-3xl shadow-2xl p-8 md:p-12 max-w-md w-[90%] z-10 border border-gray-100 max-h-[90vh] overflow-y-auto">
+            <!-- 关闭按钮 -->
+            <button onclick="closeAgentModal()" class="absolute top-6 right-6 text-gray-400 hover:text-black transition-colors">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+            
+            <div class="text-center space-y-6">
+                <div class="w-16 h-16 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+                </div>
+                <h3 class="text-3xl font-black tracking-tight">Agent & Workflow</h3>
+                <p class="text-gray-500">使用 workflow 和 agent 进行自动化巡检，可对接邮件和企业微信。</p>
+                
+                <div class="flex flex-col gap-4 mt-8">
+                    <!-- workflow -->
+                    <button onclick="window.open('workflow.jpeg', '_blank'); closeAgentModal();" class="group relative w-full flex items-center justify-between p-4 rounded-2xl border-2 border-gray-100 hover:border-emerald-500 hover:bg-emerald-50/50 transition-all duration-300">
+                        <div class="flex items-center gap-4">
+                            <div class="w-12 h-12 rounded-xl overflow-hidden shadow-sm flex-shrink-0 bg-gray-100">
+                                <img src="workflow.jpeg" class="w-full h-full object-cover">
+                            </div>
+                            <div class="text-left">
+                                <span class="font-bold text-gray-800 block">⚙️ Workflow</span>
+                                <span class="text-xs text-gray-500">自动化工作流设计</span>
+                            </div>
+                        </div>
+                        <svg class="w-5 h-5 text-gray-400 group-hover:text-emerald-500 group-hover:translate-x-1 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                    </button>
+
+                    <!-- agent -->
+                    <button onclick="window.open('agent.jpeg', '_blank'); closeAgentModal();" class="group relative w-full flex items-center justify-between p-4 rounded-2xl border-2 border-gray-100 hover:border-emerald-500 hover:bg-emerald-50/50 transition-all duration-300">
+                        <div class="flex items-center gap-4">
+                            <div class="w-12 h-12 rounded-xl overflow-hidden shadow-sm flex-shrink-0 bg-gray-100">
+                                <img src="agent.jpeg" class="w-full h-full object-cover">
+                            </div>
+                            <div class="text-left">
+                                <span class="font-bold text-gray-800 block">🤖 Agent</span>
+                                <span class="text-xs text-gray-500">智能体自动化巡检</span>
+                            </div>
+                        </div>
+                        <svg class="w-5 h-5 text-gray-400 group-hover:text-emerald-500 group-hover:translate-x-1 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                    </button>
+
+                    <!-- 监控数据 -->
+                    <button onclick="window.open('监控数据.jpeg', '_blank'); closeAgentModal();" class="group relative w-full flex items-center justify-between p-4 rounded-2xl border-2 border-gray-100 hover:border-emerald-500 hover:bg-emerald-50/50 transition-all duration-300">
+                        <div class="flex items-center gap-4">
+                            <div class="w-12 h-12 rounded-xl overflow-hidden shadow-sm flex-shrink-0 bg-gray-100">
+                                <img src="监控数据.jpeg" class="w-full h-full object-cover">
+                            </div>
+                            <div class="text-left">
+                                <span class="font-bold text-gray-800 block">📊 监控数据</span>
+                                <span class="text-xs text-gray-500">巡检监控数据展示</span>
+                            </div>
+                        </div>
+                        <svg class="w-5 h-5 text-gray-400 group-hover:text-emerald-500 group-hover:translate-x-1 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                    </button>
+
+                    <!-- 对接邮箱 -->
+                    <button onclick="window.open('对接邮箱.jpeg', '_blank'); closeAgentModal();" class="group relative w-full flex items-center justify-between p-4 rounded-2xl border-2 border-gray-100 hover:border-emerald-500 hover:bg-emerald-50/50 transition-all duration-300">
+                        <div class="flex items-center gap-4">
+                            <div class="w-12 h-12 rounded-xl overflow-hidden shadow-sm flex-shrink-0 bg-gray-100">
+                                <img src="对接邮箱.jpeg" class="w-full h-full object-cover">
+                            </div>
+                            <div class="text-left">
+                                <span class="font-bold text-gray-800 block">📧 对接邮件与企微</span>
+                                <span class="text-xs text-gray-500">巡检结果自动推送</span>
+                            </div>
+                        </div>
+                        <svg class="w-5 h-5 text-gray-400 group-hover:text-emerald-500 group-hover:translate-x-1 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 脚本开始运行后移除 no-js 标记（如果需要的话）
+        document.body.classList.remove('no-js');
+
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('active');
+                }
+            });
+        }, observerOptions);
+
+        // 如果浏览器不支持 IntersectionObserver，直接显示
+        if (!window.IntersectionObserver) {
+            document.querySelectorAll('.reveal').forEach(el => el.classList.add('active'));
+        } else {
+            document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+        }
+
+        // 简单的平滑滚动修正
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                document.querySelector(this.getAttribute('href')).scrollIntoView({
+                    behavior: 'smooth'
+                });
+            });
+        });
+        // Vibe Modal 控制逻辑
+        const vibeModal = document.getElementById('vibe-modal');
+        function openVibeModal() {
+            vibeModal.classList.add('active');
+            document.body.style.overflow = 'hidden'; // 防止背景滚动
+        }
+        function closeVibeModal() {
+            vibeModal.classList.remove('active');
+            document.body.style.overflow = '';
+        }
+
+        // Data Modal 控制逻辑
+        const dataModal = document.getElementById('data-modal');
+        function openDataModal() {
+            dataModal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+        function closeDataModal() {
+            dataModal.classList.remove('active');
+            document.body.style.overflow = '';
+        }
+
+        // AIGC Modal 控制逻辑
+        const aigcModal = document.getElementById('aigc-modal');
+        function openAigcModal() {
+            aigcModal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+        function closeAigcModal() {
+            aigcModal.classList.remove('active');
+            document.body.style.overflow = '';
+        }
+
+        // Agent Modal 控制逻辑
+        const agentModal = document.getElementById('agent-modal');
+        function openAgentModal() {
+            agentModal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+        function closeAgentModal() {
+            agentModal.classList.remove('active');
+            document.body.style.overflow = '';
+        }
+
+        // 按 ESC 键关闭弹窗
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                if (vibeModal.classList.contains('active')) closeVibeModal();
+                if (dataModal.classList.contains('active')) closeDataModal();
+                if (aigcModal.classList.contains('active')) closeAigcModal();
+                if (agentModal.classList.contains('active')) closeAgentModal();
+            }
+        });
+
+        // 电子宠物互动与拖拽逻辑
+        const pet = document.getElementById('desk-pet');
+        const bubble = document.getElementById('pet-bubble');
+        
+        let isDragging = false;
+        let startX, startY;
+        let petX = 0, petY = 0; // 当前宠物的偏移量
+
+        // 鼠标按下开始拖拽
+        pet.addEventListener('mousedown', (e) => {
+            if(e.target.closest('.food-btn')) return; // 点击按钮时不拖拽
+            isDragging = true;
+            startX = e.clientX - petX;
+            startY = e.clientY - petY;
+            pet.style.cursor = 'grabbing';
+            pet.classList.add('dragging'); // 暂停 hover 动画
+        });
+
+        // 鼠标移动时拖拽
+        document.addEventListener('mousemove', (e) => {
+            if (!isDragging) return;
+            e.preventDefault();
+            petX = e.clientX - startX;
+            petY = e.clientY - startY;
+            
+            // 更新宠物位置
+            pet.style.transform = `translate3d(${petX}px, ${petY}px, 0)`;
+        });
+
+        // 鼠标松开结束拖拽
+        document.addEventListener('mouseup', () => {
+            if (isDragging) {
+                isDragging = false;
+                pet.style.cursor = 'grab';
+                pet.classList.remove('dragging'); // 恢复 hover 动画
+            }
+        });
+
+        // 点击互动（如果有需要可以加其他动画，现在只保留投喂交互）
+        pet.addEventListener('click', (e) => {
+            if(e.target.closest('.food-btn')) return; // 点击投喂按钮时不换文字
+            // 可以加入一些点击小跳跃的动画等，但气泡文字保持默认
+        });
+
+        // 投喂功能
+        window.feedPet = function(event, foodEmoji, reply) {
+            event.stopPropagation(); // 阻止点击事件传给宠物
+            
+            // 创建掉落的食物元素
+            const food = document.createElement('div');
+            food.innerText = foodEmoji;
+            food.style.position = 'fixed';
+            food.style.fontSize = '36px';
+            food.style.zIndex = '9998';
+            food.style.pointerEvents = 'none';
+            food.style.transition = 'top 0.8s cubic-bezier(0.5, 0, 1, 1), opacity 0.3s';
+            
+            // 计算宠物的中心位置
+            const petRect = pet.getBoundingClientRect();
+            food.style.left = (petRect.left + petRect.width / 2 - 18) + 'px';
+            food.style.top = '-50px'; // 从屏幕外掉落
+            
+            document.body.appendChild(food);
+
+            // 延迟一小会儿触发掉落动画
+            setTimeout(() => {
+                food.style.top = (petRect.top + petRect.height / 2 - 20) + 'px';
+            }, 50);
+
+            // 掉落到达宠物位置后
+            setTimeout(() => {
+                food.style.opacity = '0';
+                setTimeout(() => food.remove(), 300);
+                
+                // 宠物显示开心吃东西的反应
+                bubble.innerText = reply;
+                pet.classList.add('eating');
+                
+                // 2秒后恢复正常并变回默认欢迎语
+                setTimeout(() => {
+                    pet.classList.remove('eating');
+                    bubble.innerText = "hihi你好呀!欢迎你来认识我的电子主人噢~";
+                }, 2000);
+            }, 850);
+        };
+    </script>
+</body>
+</html>
